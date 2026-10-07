@@ -1,0 +1,4 @@
+CC_google_credentials.json
+.env
+venv/
+GCP_ServiceAgent.txt
