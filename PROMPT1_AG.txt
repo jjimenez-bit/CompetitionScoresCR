@@ -1,0 +1,71 @@
+PROMPT1_AG
+
+Role & Context: You are an expert Data Engineer helping me build a Python ETL pipeline. The script will extract denormalized data from a Google Sheet, normalize and transform it using pandas, and load it into a structured PostgreSQL database in Supabase.
+
+Tech Stack: Python 3.14, gspread, pandas, supabase, python-dotenv.
+My Environment: I have already set up my virtual environment (venv), my .env file (with Supabase keys), and my google_credentials.json file in the project root.
+
+Data Schema Overview:
+
+Source (Google Sheet): A google sheet with 2 denormalized table. 
+
+GoogleSHEET NAME:BD-CompetitionClimbing
+
+Table 1: atletas [id_atleta, nombre_completo, nombre, apellido_1, apellido_2, nacionalidad, fecha_nacimiento, edad, ciudad, primera_competicion]
+
+Table 2: CB_22A25 [id_atleta, Nombre, Evento, , Modalidad, Categoria_evento, Año, Sede, Categoria, Etapa, Ruta1_Top, Ruta1_IntentoTop, Ruta1_Zona, Ruta1_IntentoZona, Ruta2_Top, Ruta2_IntentoTop, Ruta2_Zona, Ruta2_IntentoZona, Ruta3_Top, Ruta3_IntentoTop, Ruta3_Zona, Ruta3_IntentoZona, Ruta4_Top, Ruta4_IntentoTop, Ruta4_Zona, Ruta4_IntentoZona, Ruta5_Top, Ruta5_IntentoTop, Ruta5_Zona, Ruta5_IntentoZona, Top, Intentos_Tops, Zona, Intentos_Zona, Posicion, P_R1, P_R2, P_R3, P_R4, P_R5, Puntaje_total]
+
+
+Destination (Supabase): Normalized tables.
+
+Table 1: athletes [id, nombre, primer_apellido, segundo_apellido, nombre_completo, fecha_nacimiento, gender, nacionalidad, created_at]
+
+Table 2: competitions [id, nombre, modalidad, sede, categoria, año]
+
+Table 3: paises [codigo, nombre]
+
+Table 4: results [id, athlete_id, competition_id, categoria, etapa]
+
+Table 5: route_results [id, result_id, ruta_num, top, intento_top, zona, intento_zona]
+
+Transformation Rules (Pandas Logic):
+
+1.Extract unique athletes from table atletas[], then map their IDs to the table athletes[]. The origin table atletas[] has an identifier column named id_atletas, we dont need to have this column moved to the new DB table. We are going to use the automated created athletes[id] in supabase DB.
+
+2.To populate competitions[nombre] in supabase DB. Extract from gsheet tables CB_22A25[] the unique concatenation of the following columns ["Campeonato " + Categoria_evento + Evento + Año]. 
+This means every combination of the previews columns is going to be a unique event in the competitions[nombre] column. Example of a correct format from data from row A on CB_22A25[]:
+"Campeonato Mayor Interno Boulder 1 2022"
+
+3. To populate other columnas on competitions[], use this logic: 
+unique value from CB_22A25[Modalidad] goes to competitions[modalidad], 
+unique value from CB_22A25[Sede] goes to competitions[sede], 
+unique value from CB_22A25[Categoria_evento] goes to competitions[categoria],
+unique value from CB_22A25[Año] goes to competitions[año]
+
+4.Extract unique values from CB_22A25[Nombre, Categoria, Etapa] to populate results[], 
+athlete_id is looked up in athletes by [Nombre], competition_id is the id of the event.
+
+5.Extract unique values from CB_22A25[] to populate route_results[], this is the main data from the project. The gsheet CB_22A25[] is organized as follows, one row per athlete, per event stage (CB_22A25[etapa])  and every column starting from Ruta1_Top to the right are the results from the athlete on that specific stage of the competition. So to understand the gsheet logic this is an example of what every column means:
+Ruta1_Top = yes/no column where TOP=yes and 0=no, this means TOP=athlete got to the top of the route #1 and 0=athlete didn't got to the top of the route #1
+Ruta1_IntentoTop= this is a numeric value of 0 or more where if the athlete got to the top is going to have a value of 1 or more and if the athlete didn't got to the top is going to have a value of 0,
+Ruta1_Zona = yes/no column where ZONA=yes and 0=no, this means ZONA=athlete got to the zone hold of the route #1 and 0=athlete didn't got to the zone hold of the route #1
+Ruta1_IntentoZona= this is a numeric value of 0 or more where if the athlete got to the zone hold is going to have a value of 1 or more and if the athlete didn't got to the zone hold is going to have a value of 0
+These means every route row on routes_results[] is going to be linked to 4 columns of CB_2025[]
+What we need is to normalize this data into the route_results[] where we have one row per athlete, per stage, per route. Some stages are going to have just 4 routes instead of 5.
+
+
+6.Handle any missing values or date formatting issues.
+
+STRICT AGENT EXECUTION RULES:
+
+NO AUTO-EXECUTION IN CLI: Do not run any terminal/CLI commands yourself. If a command needs to be run (e.g., installing a package or running the script), provide the exact command in a bash code block, explain what it does, and wait for me to run it and tell you the result. I want to learn the process.
+
+PROGRESSIVE DISCLOSURE (NO FULL CODE YET): Do not write the full main.py script yet.
+
+OUTPUT REQUIREMENT: For this first step, output ONLY:
+
+A brief Markdown architecture plan for the ETL process.
+
+A Python skeleton (just imports and function definitions with docstrings like def extract_from_sheets():, def transform_data():, def load_to_supabase():).
+
+Ask me if the skeleton and plan look correct before proceeding to write the implementation.

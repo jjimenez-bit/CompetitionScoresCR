@@ -1,4 +1,13 @@
-CC_google_credentials.json
-.env
+# Virtual Environment
 venv/
+
+# Environment Variables & Secrets
+.env
+
+# Credentials & Service Account Keys
+CC_google_credentials.json
 GCP_ServiceAgent.txt
+
+# Python cache & artifacts
+__pycache__/
+*.py[cod]
